@@ -26,14 +26,23 @@ local function Fcitx2NonLatin(cmd)
   vim.w._fcitx_non_latin = false
 end
 
+local opts_default = {
+  ---@type number?
+  sleep = 0,
+
+  ---@type boolean?|fun(): boolean
+  enable = function()
+    return vim.fn.has("linux") == 1
+      and os.getenv("SSH_TTY") == nil
+      and os.getenv("DISPLAY") ~= nil
+      and os.getenv("XMODIFIERS") == "@im=fcitx"
+      and vim.fn.executable(fcitx_cmd) == 1
+  end,
+}
+
 M.setup = function(opts)
-  if
-    vim.fn.has("linux") == 0
-    or os.getenv("SSH_TTY") ~= nil
-    or os.getenv("DISPLAY") == nil
-    or os.getenv("XMODIFIERS") ~= "@im=fcitx"
-    or vim.fn.executable(fcitx_cmd) == 0
-  then
+  opts = vim.tbl_deep_extend("keep", opts, opts_default)
+  if type(opts.enable) ~= "function" and not opts.enable or (not opts.enable()) then
     return
   end
 
